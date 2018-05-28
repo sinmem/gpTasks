@@ -1,13 +1,10 @@
-from PIL import ImageGrab, Image
-# import matplotlib.pyplot as plt
+from PIL import ImageGrab
 import win32api
 import win32gui
 import win32con
 import random
-import numpy
 import ini
 import cheB
-import sys
 # appPath = r'F:/winmine.exe'
 dataPath = r'F:/SWrk/gpTasks/data'
 ImagePath = dataPath + r'/grabImages/'
@@ -27,6 +24,10 @@ Nnumpy = ((-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1))
 for item in range(0, ini.row):
     for jtem in range(0, ini.col):
         iniList.append((item, jtem))
+# 一个记录这些数字位置的列表
+clues = []
+# 一个记录标记雷区的列表...
+mineList = []
 
 
 def getCurPos():
@@ -59,6 +60,30 @@ def rigth_click(coord=(-1, -1)):
 
 def getWinmineNumpy():
     return None
+
+
+def resatrt():
+    # 笑脸起点坐标...
+    lsx = ini.x[0] + ini.px + ini.lpx
+    lsy = ini.y[0] + ini.py + ini.lpy
+    win32api.SetCursorPos([lsx, lsy])
+    win32api.mouse_event(
+        win32con.MOUSEEVENTF_LEFTDOWN | win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+
+
+def checkend():
+    # 笑脸起点坐标...
+    lsx = ini.x[0] + ini.px + ini.lpx
+    lsy = ini.y[0] + ini.py + ini.lpy
+    lex, ley = lsx+9, lsy+9
+    box = (lsx, lsy, lex, ley)
+    img = ImageGrab.grab(box)
+    img.save(ImagePath + 'face'+".png")
+    result = cheB.get_faceEigvals(img)
+    vit = cheB.faceDir['vict']
+    if (result - vit) < complex(1):
+        return True
+    return False
 
 
 def check_block(coord=(-1, -1)):
@@ -99,7 +124,7 @@ def get_map(coord=(-1, -1)):
                     checkList.append(temp[1])
         elif flag == 'E':
             print('GAMEOVER!')
-            sys.exit()
+            return 'gameover'
         elif flag == 'p':
             pass
         else:
@@ -159,11 +184,11 @@ def analyse():
         # 数字周围全部未知格子
         flags = empty(icoord)
         if mines(icoord) == len(flags):
-            print("--------------\n strategy1, checking", icoord)
+            # print("--------------\n strategy1, checking", icoord)
             # 此时该数字线索已经使用,应该移除
             if clues.count(icoord) > 0:
                 clues.remove(icoord)
-            print("flage", flags)
+            # print("flage", flags)
             for rck in flags:
                 rigth_click(rck)
             reflage = True
@@ -171,11 +196,11 @@ def analyse():
 
         #  情况2:数字等于周围已标记雷数(周围雷全部标记,不剩雷)-->翻开其他
         if mines(icoord) == 0:
-            print("--------------\n strategy2, checking", icoord)
+            # print("--------------\n strategy2, checking", icoord)
             if clues.count(icoord) > 0:
                 clues.remove(icoord)
             for item in empty(icoord):
-                print('click', item)
+                # print('click', item)
                 click(item)
                 get_map(item)
             reflage = True
@@ -267,30 +292,32 @@ def strategy3():
 # 以第一个点的中心为起点坐标
 
 
-# 需改成随机坐标!!
-coord = random_coord()
-print('None cluse! random click', coord)
-click(coord)
 # 从未翻开方块移除刚刚点击的方块并将方块加入待检测方块列表中
 # iniList.remove(coord)
 # print(checkList.count(coord))
 # asasa = check_block(coord)
 
-# 一个记录这些数字位置的列表
-clues = []
-# 一个记录标记雷区的列表...
-mineList = []
 
-get_map(coord)
-while len(iniList)>0:
-    if analyse():
-        continue
+# 随机坐标!!启动游戏
+def startgame():
     coord = random_coord()
     print('None cluse! random click', coord)
     click(coord)
-    if get_map(coord) == 'gameover':
-        break
-# print(checked, '\n--------------------\n')
-# ttttt = numpy.transpose(resultList)
-# for t in ttttt:
-#     print(t)
+    get_map(coord)
+    while len(iniList) > 0:
+        if analyse():
+            continue
+        coord = random_coord()
+        print('None cluse! random click', coord)
+        click(coord)
+        tempstr = get_map(coord)
+        if tempstr == 'gameover':
+            break
+    if checkend():
+        print('Congratulations!')
+    else:
+        print('Come On!')
+    # print(checked, '\n--------------------\n')
+    # ttttt = numpy.transpose(resultList)
+    # for t in ttttt:
+    #     print(t)

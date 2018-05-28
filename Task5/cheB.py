@@ -85,6 +85,7 @@ def get_faceEigvals(img):
 with open((dataPath+'DefMaxEigvals.josn').encode('utf-8'), "r") as ftemp:
     DefDir = json.load(ftemp)
 # print(DefDir)
+
 # 从文件获取模板图片的特征值存入字典
 with open((dataPath+'faceEigvals.josn').encode('utf-8'), "r") as ftemp:
     faceDir = json.load(ftemp)
@@ -95,8 +96,8 @@ print(faceDir)
 # # 板特征值存储的json文件.2 时用到
 # for ietm in range(0, len(face)):
 #     img_1 = Image.open(dataPath+face[ietm]+".png")
-#     print(face[ietm])
-#     faceDir[ietm] = str(get_faceEigvals(img_1))
+#     # print(face[ietm])
+#     faceDir[face[ietm]] = str(get_faceEigvals(img_1))
 # jsObj = json.dumps(faceDir)
 # # print(jsObj)
 # with open((dataPath+'faceEigvals.josn').encode('utf-8'), "w") as ftemp:
