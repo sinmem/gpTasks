@@ -14,20 +14,55 @@ DefValNumpy = ['0', '1', '2', '3', '4', '5', '6', '7', '8', 'p', 'E']
 # 注!!这里吧第一个方块放在(0, 0)的位置,方便与矩阵对应
 sx = ini.x[0] + ini.px + int(ini.blocksize/2)
 sy = ini.y[0] + ini.py + int(ini.blocksize/2)
-iniList = []
-# 存的是转置矩阵....为了与常识中xy坐标对应
-resultList = [['-' for row in range(ini.col)] for col in range(ini.row)]
-checkList = []
-checked = []
 # 这个元组表示点开方格周围的八个方格
 Nnumpy = ((-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1))
-for item in range(0, ini.row):
-    for jtem in range(0, ini.col):
-        iniList.append((item, jtem))
-# 一个记录这些数字位置的列表
+
+# 以下是全局变量,需要在开始游戏时初始化
+Message = ''
+iniList = []
+# 存的是转置矩阵....为了与常识中xy坐标对应
+resultList = []
+# 线索列表
 clues = []
-# 一个记录标记雷区的列表...
-mineList = []
+# 待检查列表
+checkList = []
+
+
+# 随机坐标!!启动游戏
+def startgame():
+    # 需要初始化的全局变量
+    global clues, checkList, resultList, iniList, Message
+    Message = ''
+    clues = []
+    checkList = []
+    resultList = [['-' for row in range(ini.col)] for col in range(ini.row)]
+    # 清空由于失败导致的iniList中的残留项
+    del(iniList[:])
+    for item in range(0, ini.row):
+        for jtem in range(0, ini.col):
+            iniList.append((item, jtem))
+    coord = random_coord()
+    print('None cluse! random click', coord)
+    click(coord)
+    get_map(coord)
+    while len(iniList) > 0:
+        if analyse():
+            continue
+        coord = random_coord()
+        print('None cluse! random click', len(iniList), coord)
+        click(coord)
+        tempstr = get_map(coord)
+        if tempstr == 'gameover':
+            break
+    if checkend():
+        print('Congratulations!\n-----------------------\n\n')
+        return True
+    else:
+        print('Come On!\n-----------------------\n\n')
+        return False
+    # ttttt = numpy.transpose(resultList)
+    # for t in ttttt:
+    #     print(t)
 
 
 def getCurPos():
@@ -55,15 +90,16 @@ def rigth_click(coord=(-1, -1)):
     # 被标记的区域应该写入扫描结果矩阵
     resultList[coord[0]][coord[1]] = 'P'
     if(iniList.count(coord) > 0):
-                    iniList.remove(coord)
+        iniList.remove(coord)
 
 
 def getWinmineNumpy():
     return None
 
 
-def resatrt():
+def reset():
     # 笑脸起点坐标...
+    global iniList
     lsx = ini.x[0] + ini.px + ini.lpx
     lsy = ini.y[0] + ini.py + ini.lpy
     win32api.SetCursorPos([lsx, lsy])
@@ -81,7 +117,8 @@ def checkend():
     img.save(ImagePath + 'face'+".png")
     result = cheB.get_faceEigvals(img)
     vit = cheB.faceDir['vict']
-    if (result - vit) < complex(1):
+    sub = result - vit
+    if sub < complex(0.2) and sub > complex(-0.2):
         return True
     return False
 
@@ -105,18 +142,19 @@ def check_block(coord=(-1, -1)):
 
 def get_map(coord=(-1, -1)):
     # 该函数用来扫描刚刚点击后被翻开地图的方块状态
+    global Message
     checkList.append(coord)
     while len(checkList) > 0:
         temp = [(0, 0), (0, 0)]
         # 从未翻开方块移除刚刚检测的方块并将方块加入待检测方块列表中
         temp[0] = checkList.pop()
+        Message = 'checking'
         if iniList.count(temp[0]) > 0:
             iniList.remove(temp[0])
         flag = check_block(temp[0])
         # 注!!! 注意那个转置矩阵
         resultList[temp[0][0]][temp[0][1]] = flag
         if flag == '0':
-            checked.append(temp[0])
             for item in Nnumpy:
                 temp[1] = ((temp[0][0]+item[0]), (temp[0][1]+item[1]))
                 # 得到的ctemp(需要检测的方块)在未翻开的方块中(防越界),且不在待检测列表中就将其加入待检测列表
@@ -129,7 +167,6 @@ def get_map(coord=(-1, -1)):
             pass
         else:
             clues.append(temp[0])
-            checked.append(temp[0])
         del(temp[:])
     return 'ok'
 
@@ -241,7 +278,7 @@ def strategy3():
                                 for e in empties2:
                                     if e not in same:
                                         strategy3_1f = True
-                                        print(e)
+                                        # print(e)
                                         click(e)
                                         get_map(e)
                                 return strategy3_1f
@@ -250,7 +287,7 @@ def strategy3():
                                 for e in empties1:
                                     if e not in same:
                                         strategy3_1f = True
-                                        print(e)
+                                        # print(e)
                                         click(e)
                                         get_map(e)
                                 return strategy3_1f
@@ -258,17 +295,17 @@ def strategy3():
                             # 两个剩余雷数的差值等于等于非公共区域大小时,非公共区域一定是雷
                             # len(empties1)-len(same)大于等于零
                             if mines(icoord)-mines((tx, ty)) == len(empties1)-len(same):
-                                print("--------------\n strategy3.1, flage", icoord, (tx, ty))
+                                # print("--------------\n strategy3.1, flage", icoord, (tx, ty))
                                 for e in empties1:
                                     if e not in same:
-                                        print(e)
+                                        # print(e)
                                         rigth_click(e)
                                 return True
                             elif mines((tx, ty))-mines(icoord) == len(empties2)-len(same):
-                                print("--------------\n strategy3.2, flage", icoord, (tx, ty))
+                                # print("--------------\n strategy3.2, flage", icoord, (tx, ty))
                                 for e in empties2:
                                     if e not in same:
-                                        print(e)
+                                        # print(e)
                                         rigth_click(e)
                                 return True
             reList.append(icoord)
@@ -298,26 +335,5 @@ def strategy3():
 # asasa = check_block(coord)
 
 
-# 随机坐标!!启动游戏
-def startgame():
-    coord = random_coord()
-    print('None cluse! random click', coord)
-    click(coord)
-    get_map(coord)
-    while len(iniList) > 0:
-        if analyse():
-            continue
-        coord = random_coord()
-        print('None cluse! random click', coord)
-        click(coord)
-        tempstr = get_map(coord)
-        if tempstr == 'gameover':
-            break
-    if checkend():
-        print('Congratulations!')
-    else:
-        print('Come On!')
-    # print(checked, '\n--------------------\n')
-    # ttttt = numpy.transpose(resultList)
-    # for t in ttttt:
-    #     print(t)
+# print('st')
+# startgame()

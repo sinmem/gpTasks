@@ -91,7 +91,7 @@ with open((dataPath+'faceEigvals.josn').encode('utf-8'), "r") as ftemp:
     faceDir = json.load(ftemp)
 for i in faceDir:
     faceDir[i] = complex(faceDir[i])
-print(faceDir)
+# print(faceDir)
 
 # # 板特征值存储的json文件.2 时用到
 # for ietm in range(0, len(face)):
