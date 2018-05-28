@@ -24,19 +24,29 @@ win32gui.EnumWindows(foo, 0)
 # 窗口大小
 width = x[1] - x[0]
 height = y[1] - y[0]
-global row, col
+global row, col, lpx, lpy, mod
 # 行列数
 row = 0
 col = 0
+# 那某个脸的坐标,遮脸就被切割成9*9就好
+lpx, lpy = 0, 0
+# 模式
+mod = ''
 if config[0][0] == str(width):
     row = int(config[0][2])
     col = int(config[0][3])
+    lpx, lpy = int(config[6][0]), int(config[6][1])
+    mod = 'Easy'
 elif config[1][0] == str(width):
     row = int(config[1][2])
     col = int(config[1][3])
+    lpx, lpy = int(config[7][0]), int(config[7][1])
+    mod = 'Normal'
 elif config[2][0] == str(width):
     row = int(config[2][2])
     col = int(config[2][3])
+    lpx, lpy = int(config[8][0]), int(config[8][1])
+    mod = 'Hard'
 blocksize = int(config[3][1])
 # x偏移量
 px = int(config[5][0])
