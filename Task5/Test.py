@@ -19,7 +19,7 @@ sx = ini.x[0] + ini.px + int(ini.blocksize/2)
 sy = ini.y[0] + ini.py + int(ini.blocksize/2)
 iniList = []
 # 存的是转置矩阵....为了与常识中xy坐标对应
-resultList = [['-' for row in range(ini.row)] for col in range(ini.col)]
+resultList = [['-' for row in range(ini.col)] for col in range(ini.row)]
 checkList = []
 checked = []
 # 这个元组表示点开方格周围的八个方格
@@ -43,7 +43,7 @@ def click(coord=(-1, -1)):
         win32con.MOUSEEVENTF_LEFTDOWN | win32con.MOUSEEVENTF_LEFTUP, 0, 0)
 
 
-# 标记某个位置的方格为地雷,位置算法同上
+# 标记某个位置的方格为地雷,位置算法同上,被标记的方块理应从待翻开方块中移除
 def rigth_click(coord=(-1, -1)):
     global sx, sy
     tempx = sx + int(ini.blocksize*coord[0])
@@ -53,6 +53,8 @@ def rigth_click(coord=(-1, -1)):
         win32con.MOUSEEVENTF_RIGHTDOWN | win32con.MOUSEEVENTF_RIGHTUP, 0, 0)
     # 被标记的区域应该写入扫描结果矩阵
     resultList[coord[0]][coord[1]] = 'P'
+    if(iniList.count(coord) > 0):
+                    iniList.remove(coord)
 
 
 def getWinmineNumpy():
@@ -67,7 +69,7 @@ def check_block(coord=(-1, -1)):
     cy = csy + int(ini.blocksize*coord[1])
     box = (cx, cy, cx+ini.blocksize, cy+ini.blocksize)
     img = ImageGrab.grab(box)
-    img.save(ImagePath + 'temppp'+".png")
+    # img.save(ImagePath + 'temppp'+".png")
     # 这两行显示图片哈希值的...
     # for i in cheB.get_hash(img):
     #     print(i)
@@ -164,8 +166,6 @@ def analyse():
             print("flage", flags)
             for rck in flags:
                 rigth_click(rck)
-                if(iniList.count(rck) > 0):
-                    iniList.remove(rck)
             reflage = True
             continue
 
@@ -186,56 +186,66 @@ def analyse():
     if strategy3():
         reflage = True
     if reflage:
-        print('----------'+str(reflage)+'----------')
+        # print('----------'+str(reflage)+'----------')
         return True
-    print('----------'+str(reflage)+'----------')
+    # print('----------'+str(reflage)+'----------')
     return False
 
 
+# 两个数字有公共未翻开区域...
 def strategy3():
     reList = []
     for icoord in clues:
+        # 最外层for循环用来找可能有公共区域的坐标
         for tx in range(icoord[0]-2, icoord[0]+3):
             for ty in range(icoord[1]-2, icoord[1]+3):
+                # 保证找到的坐标不会越界
                 if tx >= 0 and tx < ini.col and ty >= 0 and ty < ini.row:
+                    # 保证找到的坐标是非自身的数字方块
                     if icoord != (tx, ty) and ((tx, ty) in (clues)) and (tx, ty) not in reList:
                         empties1 = empty(icoord)
                         empties2 = empty((tx, ty))
                         same = get_same(empties1, empties2)
-
-                        # 两个数字周围雷数剩余相同,且其中一个只剩公共区域时,非公有区域没有雷???
-                        if mines(icoord) - mines((tx, ty)) == 0 and len(same) > 0 and len(same) == len(empties1):
-                            print("--------------\n strategy3, click", icoord)
-                            for e in empties2:
-                                if e not in same:
-                                    print(e)
-                                    click(e)
-                                    get_map(e)
-                            return True
-                        elif mines(icoord) - mines((tx, ty)) == 0 and len(same) > 0 and len(same) == len(empties2):
-                            print("--------------\n strategy3, click", icoord)
-                            for e in empties1:
-                                if e not in same:
-                                    print(e)
-                                    click(e)
-                                    get_map(e)
-                            return True
-           
-                        # 两个剩余雷数的差值等于等于非公共区域大小时,非公共区域一定是雷
-                        if mines(icoord)-mines((tx, ty)) == len(empties1)-len(same):
-                            print("--------------\n strategy3, flage", icoord)
-                            for e in empties1:
-                                if e not in same:
-                                    print(e)
-                                    rigth_click(e)
-                            return True
-                        elif mines(icoord)-mines((tx, ty)) == len(empties2)-len(same):
-                            print("--------------\n strategy3, flage", icoord)
-                            for e in empties2:
-                                if e not in same:
-                                    print(e)
-                                    rigth_click(e)
-                            return True
+                        # 达到初始条件: 两个数字有公共未翻开区域...且两者都还有未排除的雷
+                        if len(same) > 0 and mines(icoord) > 0 and mines((tx, ty)) > 0:
+                            # 两个数字周围雷数剩余相同,且其中一个只剩公共区域时,非公有区域没有雷???
+                            strategy3_1f = False
+                            # print('ttx', mines(icoord), mines((tx, ty)), len(same), len(empties1), len(empties2))
+                            if mines(icoord) - mines((tx, ty)) == 0 and len(same) == len(empties1):
+                                # print("--------------\n strategy3.1, click", icoord, (tx, ty))
+                                for e in empties2:
+                                    if e not in same:
+                                        strategy3_1f = True
+                                        print(e)
+                                        click(e)
+                                        get_map(e)
+                                return strategy3_1f
+                            elif mines(icoord) - mines((tx, ty)) == 0 and len(same) == len(empties2):
+                                # print("--------------\n strategy3.2, click", icoord, (tx, ty))
+                                for e in empties1:
+                                    if e not in same:
+                                        strategy3_1f = True
+                                        print(e)
+                                        click(e)
+                                        get_map(e)
+                                return strategy3_1f
+                            # print(mines(icoord), mines((tx, ty)), len(same), len(empties1), len(empties2))
+                            # 两个剩余雷数的差值等于等于非公共区域大小时,非公共区域一定是雷
+                            # len(empties1)-len(same)大于等于零
+                            if mines(icoord)-mines((tx, ty)) == len(empties1)-len(same):
+                                print("--------------\n strategy3.1, flage", icoord, (tx, ty))
+                                for e in empties1:
+                                    if e not in same:
+                                        print(e)
+                                        rigth_click(e)
+                                return True
+                            elif mines((tx, ty))-mines(icoord) == len(empties2)-len(same):
+                                print("--------------\n strategy3.2, flage", icoord, (tx, ty))
+                                for e in empties2:
+                                    if e not in same:
+                                        print(e)
+                                        rigth_click(e)
+                                return True
             reList.append(icoord)
     return False
 
@@ -281,6 +291,6 @@ while len(iniList)>0:
     if get_map(coord) == 'gameover':
         break
 # print(checked, '\n--------------------\n')
-ttttt = numpy.transpose(resultList)
-for t in ttttt:
-    print(t)
+# ttttt = numpy.transpose(resultList)
+# for t in ttttt:
+#     print(t)
