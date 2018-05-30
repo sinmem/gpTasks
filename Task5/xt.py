@@ -1,37 +1,29 @@
 import sys
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QApplication, QBoxLayout, QDialog, QComboBox,
-                             QDialogButtonBox, QGridLayout, QLabel, QLineEdit,
-                             QTextEdit, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import *
+import time
 
+class WinForm(QWidget):
+    def __init__(self, parent = None):
+        super(WinForm, self).__init__(parent)
+        self.setWindowTitle('实时刷新页面例子')
+        self.listFile = QListWidget()
+        self.btnStart = QPushButton('开始')
+        layout = QGridLayout(self)
+        layout.addWidget(self.listFile, 0, 0, 1, 2)
+        layout.addWidget(self.btnStart, 1, 1)
 
-class Example(QWidget):
+        self.btnStart.clicked.connect(self.slotAdd)
+        self.setLayout(layout)
 
-    def _init_(self):
-        super().__init__()
-        self.initUI()
-    
-    def initUI(self):
-
-        combo = QComboBox(self)
-        combo.addItem('Easy')
-        combo.addItem('Normal')
-        combo.addItem('Hard')
-
-        combo.move(50, 50)
-
-        combo.activated[str].connect(self.onActivated)
-
-        self.setGeometry(300, 300, 300, 200)
-        self.setWindowTitle('QComboBox')
-        self.show()
-
-    def onActivated(self, text):
-        print(text)
-
+    def slotAdd(self):
+        for n in range(10):
+            str_n = 'file index {0}'.format(n)
+            self.listFile.addItem(str_n)
+            QApplication.processEvents()
+            time.sleep(1)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Example()
-    # ex.show()
+    form = WinForm()
+    form.show()
     sys.exit(app.exec_())

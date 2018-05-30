@@ -16,7 +16,7 @@ sx = ini.x[0] + ini.px + int(ini.blocksize/2)
 sy = ini.y[0] + ini.py + int(ini.blocksize/2)
 # 这个元组表示点开方格周围的八个方格
 Nnumpy = ((-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1))
-
+blockImg = None
 # 以下是全局变量,需要在开始游戏时初始化
 Message = ''
 iniList = []
@@ -30,16 +30,17 @@ checkList = []
 
 # 随机坐标!!启动游戏
 def startgame():
+    # ini.inicof()
     # 需要初始化的全局变量
     global clues, checkList, resultList, iniList, Message
     Message = ''
     clues = []
     checkList = []
-    resultList = [['-' for row in range(ini.col)] for col in range(ini.row)]
+    resultList = [['-' for row in range(ini.row)] for col in range(ini.col)]
     # 清空由于失败导致的iniList中的残留项
     del(iniList[:])
-    for item in range(0, ini.row):
-        for jtem in range(0, ini.col):
+    for item in range(0, ini.col):
+        for jtem in range(0, ini.row):
             iniList.append((item, jtem))
     coord = random_coord()
     print('None cluse! random click', coord)
@@ -69,7 +70,7 @@ def getCurPos():
     return win32gui.GetCursorPos
 
 
-# 根据传入位置翻开该位置,位置为在起点位置上偏移n倍方格数
+# 根据传入位置翻开该位置,位置为在起点位置上偏移n倍方格数,并截取方块区域当做条件
 def click(coord=(-1, -1)):
     global sx, sy
     tempx = sx + int(ini.blocksize * coord[0])
@@ -77,6 +78,7 @@ def click(coord=(-1, -1)):
     win32api.SetCursorPos([tempx, tempy])
     win32api.mouse_event(
         win32con.MOUSEEVENTF_LEFTDOWN | win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+    get_blocks()
 
 
 # 标记某个位置的方格为地雷,位置算法同上,被标记的方块理应从待翻开方块中移除
@@ -114,7 +116,7 @@ def checkend():
     lex, ley = lsx+9, lsy+9
     box = (lsx, lsy, lex, ley)
     img = ImageGrab.grab(box)
-    img.save(ImagePath + 'face'+".png")
+    # img.save(ImagePath + 'face'+".png")
     result = cheB.get_faceEigvals(img)
     vit = cheB.faceDir['vict']
     sub = result - vit
@@ -123,14 +125,23 @@ def checkend():
     return False
 
 
-def check_block(coord=(-1, -1)):
-    # 检测方块的起点坐标
+def get_blocks():
+    global blockImg
     csx = ini.x[0] + ini.px
     csy = ini.y[0] + ini.py
-    cx = csx + int(ini.blocksize*coord[0])
-    cy = csy + int(ini.blocksize*coord[1])
-    box = (cx, cy, cx+ini.blocksize, cy+ini.blocksize)
-    img = ImageGrab.grab(box)
+    cex = csx + int(ini.blocksize*ini.col)
+    cey = csy + int(ini.blocksize*ini.row)
+    box = (csx, csy, cex, cey)
+    blockImg = ImageGrab.grab(box)
+    blockImg.save(ImagePath + 'block'+".png")
+
+
+def check_block(coord=(-1, -1)):
+    # +3表示从图片第三个像素开始截图, +10表示截图面积是10
+    cx = int(ini.blocksize*coord[0])+3
+    cy = int(ini.blocksize*coord[1])+3
+    box = (cx, cy, cx+10, cy+10)
+    img = blockImg.crop(box)
     # img.save(ImagePath + 'temppp'+".png")
     # 这两行显示图片哈希值的...
     # for i in cheB.get_hash(img):

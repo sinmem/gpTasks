@@ -14,7 +14,7 @@ def get_hash(img):
     pixels = list(img_L.getdata())
     temp = []
     for i in range(0, 10):
-        a = 48 + i * 16 + 3
+        a = i * 10
         b = a + 10
         temp.append(pixels[a:b])
     for p in range(0, len(temp)):
