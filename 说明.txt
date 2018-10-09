@@ -1,0 +1,9 @@
+文件夹:__pycache__是编译后的py模块
+文件: AutoMineSweeper 是一个测试扫雷模块是否可以正常运行的模块
+文件: conf.txt是基本信息配置文件,分别是懒得说
+*_back暂时没用
+myresouce.json是各种难度ui显示的数据文件
+*.json,特征值的存储文件,取出来对应那几个长的列表里面的下标
+ini程序启动的初始化文件
+sweeper.扫雷主逻辑
+ss.ui部分

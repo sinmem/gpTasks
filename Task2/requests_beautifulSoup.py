@@ -6,7 +6,7 @@ import requests
 import os
 import re
 
-
+# 通过url获取html内容
 def getHtml(url):
     headers = {
         # 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
